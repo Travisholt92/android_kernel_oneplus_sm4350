@@ -18,6 +18,7 @@ obj-y += coretech/
 endif
 obj-y += fs/
 obj-y += kernel/
+obj-$(CONFIG_TRI_STATE_KEY) += tri_state_key/
 ifneq ($(CONFIG_ARCH_HOLI), y)
 obj-y += power/
 endif
