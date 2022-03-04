@@ -3452,6 +3452,7 @@ static const struct sdhci_ops sdhci_msm_ops = {
 	.set_bus_width = sdhci_set_bus_width,
 	.set_uhs_signaling = sdhci_msm_set_uhs_signaling,
 	.get_max_timeout_count = sdhci_msm_get_max_timeout_count,
+
 #if defined(CONFIG_SDC_QTI)
 	.dump_vendor_regs = sdhci_msm_dump_vendor_regs,
 #endif
@@ -4412,6 +4413,14 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 		goto pm_runtime_disable;
 	sdhci_msm_set_regulator_caps(msm_host);
 
+	/*
+	 * Ensure larger discard size by setting max_busy_timeout.
+	 * This has to set only after sdhci_add_host so that our
+	 * value won't be over-written.
+	 */
+#ifndef CONFIG_ARCH_HOLI
+	host->mmc->max_busy_timeout = 0;
+#endif
 #if defined(CONFIG_SDC_QTI)
 	sdhci_msm_init_sysfs(pdev);
 #endif
