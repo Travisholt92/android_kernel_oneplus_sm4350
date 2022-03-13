@@ -25,7 +25,7 @@
 #include <trace/events/sched.h>
 #include <trace/hooks/sched.h>
 
-#include "walt/walt.h"
+#include "walt.h"
 
 #ifdef CONFIG_OPCHAIN
 //2020-10-23, add for uxrealm CONFIG_OPCHAIN
@@ -172,7 +172,6 @@ unsigned int sched_capacity_margin_down[NR_CPUS] = {
 __read_mostly unsigned int sysctl_sched_prefer_spread;
 unsigned int sysctl_walt_rtg_cfs_boost_prio = 99; /* disabled by default */
 unsigned int sysctl_walt_low_latency_task_threshold; /* disabled by default */
-unsigned int sysctl_sched_sync_hint_enable = 1;
 #endif
 unsigned int sched_small_task_threshold = 102;
 __read_mostly unsigned int sysctl_sched_force_lb_enable = 1;
@@ -7259,7 +7258,6 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 	unsigned long cpu_cap = arch_scale_cpu_capacity(cpumask_first(pd_mask));
 #endif
 	unsigned long max_util = 0, sum_util = 0;
-	unsigned long energy = 0;
 	int cpu;
 	unsigned long cpu_util;
 
@@ -7302,11 +7300,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 		max_util = max(max_util, cpu_util);
 	}
 
-	trace_android_vh_em_pd_energy(pd->em_pd, max_util, sum_util, &energy);
-	if (!energy)
-		energy = em_pd_energy(pd->em_pd, max_util, sum_util);
-
-	return energy;
+	return em_pd_energy(pd->em_pd, max_util, sum_util);
 }
 
 #ifdef CONFIG_SCHED_WALT
@@ -7454,14 +7448,12 @@ int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 
 	if (sync && (need_idle || (is_rtg && curr_is_rtg)))
 		sync = 0;
-
 //2020-10-23, add for uxrealm CONFIG_OPCHAIN
 #ifdef CONFIG_OPCHAIN
 	if (sync && bias_to_this_cpu(p, cpu, start_cpu) &&
 			opc_check_uxtop_cpu(is_uxtop, cpu)) {
 #else
-	if (sysctl_sched_sync_hint_enable && sync
-			&& bias_to_this_cpu(p, cpu, start_cpu)) {
+	if (sync && bias_to_this_cpu(p, cpu, start_cpu)) {
 #endif /*CONFIG_OPCHAIN*/
 		best_energy_cpu = cpu;
 		fbt_env.fastpath = SYNC_WAKEUP;
@@ -9585,10 +9577,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
 
 		sgs->group_load += cpu_runnable_load(rq);
 		sgs->group_util += cpu_util(i);
+		sgs->sum_nr_running += rq->cfs.h_nr_running;
 
 		nr_running = rq->nr_running;
-		sgs->sum_nr_running += nr_running;
-
 		if (nr_running > 1)
 			*sg_status |= SG_OVERLOAD;
 
