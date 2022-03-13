@@ -25,7 +25,7 @@
 #include <trace/events/sched.h>
 #include <trace/hooks/sched.h>
 
-#include "walt.h"
+#include "walt/walt.h"
 
 #ifdef CONFIG_OPCHAIN
 //2020-10-23, add for uxrealm CONFIG_OPCHAIN
