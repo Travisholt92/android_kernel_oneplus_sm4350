@@ -641,7 +641,7 @@ endif
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
 
-KBUILD_MODULES :=
+KBUILD_MODULES := 1
 KBUILD_BUILTIN := 1
 
 # If we have only "make modules", don't compile built-in objects.
