@@ -344,12 +344,6 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 	struct cpufreq_policy *policy = sg_policy->policy;
 	unsigned int freq = arch_scale_freq_invariant() ?
 				policy->cpuinfo.max_freq : policy->cur;
-	unsigned long next_freq = 0;
-
-	trace_android_vh_map_util_freq(util, freq, max, &next_freq);
-	if (next_freq)
-		freq = next_freq;
-	else
 
 #ifdef CONFIG_CONTROL_CENTER
 	unsigned int req_freq;
